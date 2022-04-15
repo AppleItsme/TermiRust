@@ -1,57 +1,33 @@
-use std::fmt;
+use std::{io::{self, Write}, error::Error};
 
-pub struct GoTo(pub u16, pub u16);
-pub struct Show;
-pub struct Hide;
-pub struct Position {
-    pub x: i32,
-    pub y: i32
+pub struct Cursor {
+    pub x: u16,
+    pub y: u16
 }
 
-
-macro_rules! CursorMovement {
-    ($name:ident, $codeLetter:expr) => {
-        struct $name(u16);
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "\x1B[{}{}", self.0, $codeLetter)
-            }
-        }
-    };
-}
-
-CursorMovement!(CursorLeft, "D");
-CursorMovement!(CursorRight, "C");
-CursorMovement!(CursorUp, "B");
-CursorMovement!(CursorDown, "A");
-
-impl Position {
-    pub fn MoveCursor(&mut self, x: i32, y: i32) {
-        self.x += x;
-        self.y += y;
-        if x < 0 {
-            print!("{}", CursorLeft((x as i16 * -1) as u16));
-        } else if x > 0 {
-            print!("{}", CursorRight(x as u16));
-        }
-
-        if y > 0 {
-            print!("{}", CursorUp(y as u16));
-        } else if y < 0 {
-            print!("{}", CursorDown((y as i16 * -1) as u16));
-        }
+impl Cursor {
+    pub fn new() -> Cursor {
+        let mut handle = io::stdout();
+        let result = handle.write("\x1b[H".as_bytes());
+        let mut err = result.err();
+        if err.is_some() { eprint!("{:?}",err); }
+        err = handle.flush().err();
+        if err.is_some() { eprint!("{:?}", err); }
+        Cursor{ x: 1, y: 1 }
     }
-}
 
-impl fmt::Display for Show {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "\x1B[?25h")
+    pub fn goto(&mut self, X: u16, Y: u16) -> Option<io::Error> {
+        self.x = X;
+        self.y = Y;
+        let mut handle = io::stdout();
+        let result = handle.write(format!("\x1B[{};{}H", X, Y).as_bytes());
+        match &result {
+            Ok(_) => {},
+            Err(_) => return result.err(),
+        }
+        handle.flush().err()
     }
-}
+    pub fn print(&mut self, txt: &str) {
 
-
-impl fmt::Display for Hide {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "\x1b[?25l")
     }
 }

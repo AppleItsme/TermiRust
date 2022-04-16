@@ -1,0 +1,20 @@
+#![allow(dead_code)]
+#![allow(non_snake_case)]
+
+#[path="./ANSI/draw.rs"]
+mod draw;
+#[path="./ANSI/colours.rs"]
+mod colours;
+
+fn main() {
+    let mut cursorInit = draw::Cursor::new();
+    let mut cursor;
+    match cursorInit {
+        Ok(v) => cursor = v,
+        Err(e) => {
+            eprint!("{:?}", e)
+            panic!();
+        },
+    }
+    loop {};
+}
